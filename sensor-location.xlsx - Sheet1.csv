@@ -1,0 +1,37 @@
+Objectummer,Locatienaam,Lat/Long,Breedte,Effectieve  breedte
+CMSA-GAKH-01,Kalverstraat t.h.v. 1,"52.372634, 4.892071",8,"6,7"
+CMSA-GAWW-11,Korte Niezel,"52.374616, 4.899830","3,8","3,4"
+CMSA-GAWW-12,Oudekennissteeg,"52.373860, 4.898690",3,"2,6"
+CMSA-GAWW-13,Stoofsteeg,"52.372439, 4.897689","2,6","2,2"
+CMSA-GAWW-14,Oudezijds Voorburgwal t.h.v. 91,"52.373538, 4.898166",4,"3,6"
+CMSA-GAWW-15,Oudezijds Achterburgwal t.h.v. 86,"52.372916, 4.898207","3,2","2,8"
+CMSA-GAWW-16,Oudezijds Achterburgwal t.h.v. 91,"52.372628, 4.898233","3,1","2,7"
+CMSA-GAWW-17,Oudezijds Voorburgwal t.h.v. 206,"52.372782, 4.896649","5,1","4,7"
+CMSA-GAWW-19,Molensteeg,"52.373587, 4.899815","2,9","2,5"
+CMSA-GAWW-20,Oudebrugsteeg ,"52.375350, 4.897480","5,7","5,3"
+CMSA-GAWW-21,Damstraat,"52.371930, 4.895600","9,7","9,3"
+CMSA-GAWW-23,Bloedstraat,"52.372764, 4.899829","5,7","5,3"
+GACM-04,Damrak 1-5,"52.377027, 4.898059",7,"6,2"
+GVCV-01,CS - ri. NDSM,"52.380686, 4.899041","3,5","3,1"
+GVCV-03,CS - ri. Buiksloterweg (West),"52.380566,4.899360","3,5","3,1"
+GVCV-04,CS - ri. Buiksloterweg (Oost),"52.380516,4.899524","3,5","3,1"
+GVCV-05-A,CS - ri. IJplein (West),"52.378526, 4.905811","3,5","3,1"
+GVCV-05-B,CS - ri. IJplein (Oost),"52.378526, 4.905811","3,5","3,1"
+GVCV-06,Azartplein,"52.378101,4.937281","3,5","3,1"
+GVCV-07,Pontsteiger N (ri. NDSM),"52.392143,4.885861","3,5","3,1"
+GVCV-08,Pontsteiger Z (ri. Distelweg),"52.392029,4.886005","3,5","3,1"
+GVCV-09,Zeeburg,"52.374414, 4.949579","3,5","3,1"
+GVCV-11,NDSMkade,"52.401060, 4.891368","3,5","3,1"
+GVCV-13,Buiksloterweg,"52.382352, 4.903016","3,5","3,1"
+GVCV-14,Buiksloterweg,"52.382169, 4.903385","3,5","3,1"
+GASA-06,Azartplein B,"52.378020, 4.937150",,"3,1"
+GASA-01-A1,IJBoulevardA1,"52.380450, 4.900310",,4
+GASA-01-A2,IJBoulevardA2,"52.380420, 4.900280",,4
+GASA-01-B,IJBoulevardB,"52.380340, 4.899920",,6
+GASA-01-C,IJBoulevardC,"52.380280, 4.899850",,6
+GASA-02-01,BrugOostertoegang1,"52.378640, 4.904720",,6
+GASA-02-02,BrugOostertoegang2,"52.378580, 4.904660",,6
+GASA-03,Oosterdoksbrug,"52.377620, 4.911010",,8
+GASA-04,CSriOosterdokskade,"52.377020, 4.903520",,7
+GASA-05-O,NoorderparkOost,"52.388980, 4.919630",,4
+GASA-05-W,NoorderparkWest,"52.389260, 4.918930",,4
