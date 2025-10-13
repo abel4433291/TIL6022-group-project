@@ -1,16 +1,120 @@
 import pandas as pd
+import json
+import re
+import binascii
+import io
 import fastparquet
 import torch
 
 
 tomtom = pd.read_parquet('Data-share/Data-share/20250820163000_stream.tomtom.analyze-sail.parquet', engine='fastparquet')
 vessels = pd.read_parquet('Data-share\Data-share/20250820163000_stream.vessel-positions-anonymized-processed.analyze-sail.parquet', engine='fastparquet')
-sensors = pd.read_csv('Sensordata_SAIL2025')
-
-print(tomtom.head(100))
+sensors = pd.read_csv('TIL6022-group-project/sensordata_SAIL2025.csv')
 
 
+def decode_tomtom(v):
+    if not isinstance(v, str) or not v.strip():
+        return None
+    try:
+        cleaned = re.sub(r"[^\x20-\x7E]+", "", v)
+        start = cleaned.find("{")
+        end = cleaned.rfind("}") + 1
+        if start == -1 or end <= start:
+            return None
+        return json.loads(cleaned[start:end])
+    except Exception:
+        return None
+    
+import re, json, binascii
 
+def decode_vessels(v):
+    if not isinstance(v, str) or not v.strip():
+        return None
+    try:
+        # keep only hex chars
+        hex_str = re.sub(r'[^0-9A-Fa-f]', '', v)
+        if not hex_str:
+            return None
+
+        # decode from hex → utf-8
+        decoded = binascii.unhexlify(hex_str).decode('utf-8', errors='ignore')
+
+        # trim any stray control chars
+        decoded = re.sub(r'[^\x20-\x7E]+', '', decoded)
+
+        # locate JSON portion
+        start, end = decoded.find('{'), decoded.rfind('}') + 1
+        if start == -1 or end <= start:
+            return None
+
+        return json.loads(decoded[start:end])
+    except Exception:
+        return None
+
+
+# Decode TomTom messages
+tomtom["decoded"] = tomtom["_value"].apply(decode_tomtom)
+decoded_tomtom = pd.json_normalize(tomtom["decoded"].dropna())
+expanded_tomtom = pd.concat([tomtom.drop(columns=["decoded"]), decoded_tomtom], axis=1)
+
+# Decode vessel messages
+vessels["decoded"] = vessels["_value"].apply(decode_vessels)
+decoded_vessels = pd.json_normalize(vessels["decoded"].dropna())
+expanded_vessels = pd.concat([vessels.drop(columns=["decoded"]), decoded_vessels], axis=1)
+
+# # # Preview results
+# print(expanded_tomtom.columns, expanded_tomtom.head())
+# print(expanded_vessels.columns, expanded_vessels.head())
+
+# --- VESSELS ---
+# Keep only current position, timestamp, vessel size, and coordinates
+vessels_data = expanded_vessels[[
+    "upload-timestamp",
+    "imo-number",   # when the record was uploaded
+    "length",             # vessel length
+    "lat",                # latitude
+    "lon"                 # longitude
+]].copy()
+
+# Rename for clarity
+vessels_data = vessels_data.rename(columns={
+    "upload-timestamp": "timestamp",
+})
+
+# Drop rows without coordinates
+vessels_data = vessels_data.dropna(subset=["lat", "lon"])
+
+print("✅ vessels_data created:", vessels_data.shape)
+print(vessels_data.head())
+
+
+# --- TOMTOM ---
+# Keep only the traffic info you care about
+tomtom_data = expanded_tomtom[[
+    "time",               # timestamp of traffic snapshot
+    "data"                # contains id + traffic_level pairs
+]].copy()
+
+# Parse the inner mini-CSV from each TomTom row
+import io
+
+def parse_tomtom_data(row):
+    try:
+        df = pd.read_csv(io.StringIO(row["data"]))
+        df["snapshot_time"] = pd.to_datetime(row["time"])
+        return df
+    except Exception:
+        return pd.DataFrame()
+
+# Expand all TomTom mini-tables into one combined DataFrame
+traffic_parts = [parse_tomtom_data(row) for _, row in tomtom_data.iterrows()]
+tomtom_data = pd.concat(traffic_parts, ignore_index=True)
+
+print("✅ tomtom_data created:", tomtom_data.shape)
+print(tomtom_data.head())
+
+vessels_data.to_parquet("vessels_data.parquet", index=False)
+tomtom_data.to_parquet("tomtom_data.parquet", index=False)
 
 
 
