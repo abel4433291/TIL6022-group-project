@@ -4,8 +4,6 @@ import re
 import binascii
 import io
 import fastparquet
-import torch
-
 
 tomtom = pd.read_parquet('Data-share/Data-share/20250820163000_stream.tomtom.analyze-sail.parquet', engine='fastparquet')
 vessels = pd.read_parquet('Data-share\Data-share/20250820163000_stream.vessel-positions-anonymized-processed.analyze-sail.parquet', engine='fastparquet')
@@ -81,7 +79,7 @@ vessels_data = vessels_data.rename(columns={
     "upload-timestamp": "timestamp",
 })
 
-# Drop rows without coordinates
+# Drop rows without coordinates 
 vessels_data = vessels_data.dropna(subset=["lat", "lon"])
 
 print("✅ vessels_data created:", vessels_data.shape)
