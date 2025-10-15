@@ -3,17 +3,17 @@ import numpy as np
 from pathlib import Path
 
 
-KNMI_10MIN_CSV = Path("/mnt/data/KNMI_10min.csv") 
-KNMI_WBGT_CSV  = Path("/mnt/data/KNMI_WBGT.csv") 
+KNMI_10MIN_CSV = Path("KNMI_10min.csv") 
+KNMI_WBGT_CSV  = Path("KNMI_WBGT.csv") 
 
 STATIONS = [240, 225]  # Schiphol=240, IJmuiden=225 (pas aan indien gewenst)
 START = "2025-08-20 00:00"
 END   = "2025-08-24 23:59"
 TZ = "Europe/Amsterdam"
 
-OUT_10MIN = Path("/mnt/data/knmi_meteo_filtered.csv")
-OUT_WBGT  = Path("/mnt/data/knmi_wbgt_filtered.csv")
-OUT_3MIN  = Path("/mnt/data/knmi_meteo_wbgt_3min.csv")
+OUT_10MIN = Path("knmi_meteo_filtered.csv")
+OUT_WBGT  = Path("knmi_wbgt_filtered.csv")
+OUT_3MIN  = Path("knmi_meteo_wbgt_3min.csv")
 
 def read_knmi_generic(path: Path):
     if not path.exists():
