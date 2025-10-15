@@ -1,0 +1,134 @@
+import pandas as pd
+import numpy as np
+from pathlib import Path
+
+
+KNMI_10MIN_CSV = Path("/mnt/data/KNMI_10min.csv") 
+NMI_WBGT_CSV  = Path("/mnt/data/KNMI_WBGT.csv") 
+
+STATIONS = [240, 225]  # Schiphol=240, IJmuiden=225 (pas aan indien gewenst)
+START = "2025-08-20 00:00"
+END   = "2025-08-24 23:59"
+TZ = "Europe/Amsterdam"
+
+OUT_10MIN = Path("/mnt/data/knmi_meteo_filtered.csv")
+OUT_WBGT  = Path("/mnt/data/knmi_wbgt_filtered.csv")
+OUT_3MIN  = Path("/mnt/data/knmi_meteo_wbgt_3min.csv")
+
+def read_knmi_generic(path: Path):
+    if not path.exists():
+        return pd.DataFrame()
+    df = pd.read_csv(
+        path,
+        comment="#",
+        engine="python",
+        sep=r"[;,]",   # comma of semicolon
+        na_values=["", " ", "NA", "NaN", "null", "NULL"]
+    )
+    # strip spaties in kolomnamen
+    df.columns = [c.strip() for c in df.columns]
+    return df
+
+def build_timestamp(df, date_col="YYYYMMDD", time_col="HHMM", tz=TZ):
+    if date_col not in df.columns or time_col not in df.columns:
+        return df
+    # Zorg dat ze strings zijn met zero-padding
+    ymd = df[date_col].astype(str).str.zfill(8)
+    hm = df[time_col].astype(str).str.zfill(4)
+    ts = pd.to_datetime(ymd + hm, format="%Y%m%d%H%M")
+    # lokaliseer als naive -> lokale tijd
+    df["timestamp"] = ts.dt.tz_localize(tz)
+    return df
+
+def filter_station_period(df, stations, start, end):
+    if "STN" in df.columns:
+        # station kan als str komen: forceer int waar mogelijk
+        df["STN"] = pd.to_numeric(df["STN"], errors="coerce").astype("Int64")
+        df = df[df["STN"].isin(stations)].copy()
+    if "timestamp" in df.columns:
+        df = df[(df["timestamp"] >= pd.Timestamp(start, tz=TZ)) &
+                (df["timestamp"] <= pd.Timestamp(end, tz=TZ))].copy()
+    return df
+
+met = read_knmi_generic(KNMI_10MIN_CSV)
+if not met.empty:
+    met = build_timestamp(met, "YYYYMMDD", "HHMM", TZ)
+    met = filter_station_period(met, STATIONS, START, END)
+
+    # Unit-conversies (KNMI documentatie):
+    # T (0.1 °C) -> °C, RH (0.1 %) -> %, FF (0.1 m/s) -> m/s, P (0.1 hPa) -> hPa, DR (0.1 mm) -> mm
+    def safe_div(x, d):
+        return pd.to_numeric(x, errors="coerce")/d
+
+    T  = safe_div(met.get("T"), 10)    # °C
+    RH = safe_div(met.get("RH"), 10)   # %
+    FF = safe_div(met.get("FF"), 10)   # m/s
+    DD = pd.to_numeric(met.get("DD"), errors="coerce")  # deg
+    DR = safe_div(met.get("DR"), 10)   # mm (10-min neerslag)
+    Q  = pd.to_numeric(met.get("Q"), errors="coerce")   # J/cm^2 (10-min straling)
+    P  = safe_div(met.get("P"), 10)    # hPa
+
+    cols = {
+        "timestamp": met["timestamp"],
+        "station":   met.get("STN"),
+        "temp_C":    T,
+        "rh_pct":    RH,
+        "wind_mps":  FF,
+        "wind_dir_deg": DD,
+        "precip_mm": DR,
+        "rad_Jcm2":  Q,
+        "pressure_hpa": P,
+    }
+    met_out = pd.DataFrame(cols).dropna(subset=["timestamp"]).sort_values("timestamp")
+    # Aggregeer als meerdere stations: gemiddelde per tijd (of kies 1 station)
+    met_out = (met_out
+               .set_index("timestamp")
+               .groupby("timestamp")
+               .mean(numeric_only=True)
+               .reset_index())
+else:
+    met_out = pd.DataFrame(columns=["timestamp","temp_C","rh_pct","wind_mps","wind_dir_deg","precip_mm","rad_Jcm2","pressure_hpa"])
+
+wb = read_knmi_generic(KNMI_WBGT_CSV)
+if not wb.empty:
+    wb = build_timestamp(wb, "YYYYMMDD", "HHMM", TZ)
+    wb = filter_station_period(wb, STATIONS, START, END)
+
+    WBGT = pd.to_numeric(wb.get("WBGT"), errors="coerce")  # °C
+    wb_out = pd.DataFrame({
+        "timestamp": wb["timestamp"],
+        "wbgt_C": WBGT
+    }).dropna(subset=["timestamp"]).sort_values("timestamp")
+    # Meerdere stations -> gemiddelde per timestamp
+    wb_out = (wb_out
+              .set_index("timestamp")
+              .groupby("timestamp")
+              .mean(numeric_only=True)
+              .reset_index())
+else:
+    wb_out = pd.DataFrame(columns=["timestamp","wbgt_C"])
+
+if not met_out.empty:
+    met_out.to_csv(OUT_10MIN, index=False)
+if not wb_out.empty:
+    wb_out.to_csv(OUT_WBGT, index=False)
+
+if met_out.empty and wb_out.empty:
+    print("Geen input gevonden; controleer paden/formaten.")
+else:
+    # Merge op timestamp
+    merged = pd.merge(
+        met_out.set_index("timestamp"),
+        wb_out.set_index("timestamp"),
+        left_index=True, right_index=True, how="outer"
+    ).sort_index()
+
+    # Resample naar 3 minuten met forward-fill
+    merged_3min = (merged
+                   .resample("3min")
+                   .ffill()
+                   .reset_index())
+    merged_3min.to_csv(OUT_3MIN, index=False)
+    print(f"OK -> {OUT_3MIN}")
+    if OUT_10MIN.exists(): print(f"OK -> {OUT_10MIN}")
+    if OUT_WBGT.exists():  print(f"OK -> {OUT_WBGT}")
