@@ -82,7 +82,7 @@ vessels_data = vessels_data.rename(columns={
 # Drop rows without coordinates 
 vessels_data = vessels_data.dropna(subset=["lat", "lon"])
 
-print("✅ vessels_data created:", vessels_data.shape)
+print("vessels_data created:", vessels_data.shape)
 print(vessels_data.head())
 
 
@@ -108,7 +108,7 @@ def parse_tomtom_data(row):
 traffic_parts = [parse_tomtom_data(row) for _, row in tomtom_data.iterrows()]
 tomtom_data = pd.concat(traffic_parts, ignore_index=True)
 
-print("✅ tomtom_data created:", tomtom_data.shape)
+print("tomtom_data created:", tomtom_data.shape)
 print(tomtom_data.head())
 
 vessels_data.to_parquet("vessels_data.parquet", index=False)
