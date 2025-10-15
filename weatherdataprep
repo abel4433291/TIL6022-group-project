@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 KNMI_10MIN_CSV = Path("/mnt/data/KNMI_10min.csv") 
-NMI_WBGT_CSV  = Path("/mnt/data/KNMI_WBGT.csv") 
+KNMI_WBGT_CSV  = Path("/mnt/data/KNMI_WBGT.csv") 
 
 STATIONS = [240, 225]  # Schiphol=240, IJmuiden=225 (pas aan indien gewenst)
 START = "2025-08-20 00:00"
